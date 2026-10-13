@@ -1,0 +1,383 @@
+/* =========================================================
+   Kenya Railways - style.css
+   Student case study: mobile-first stylesheet.
+   Base styles target small phones; layout is enhanced
+   for tablet (min-width: 600px) and desktop (min-width: 900px).
+   ========================================================= */
+
+/* ---------- 1. Element selectors (mobile-first base) ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #222222;
+  background: #f4f1e8;
+}
+
+h1, h2, h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: normal;
+  color: #111111;
+  line-height: 1.3;
+  margin: 0 0 12px;
+}
+
+h1 { font-size: 26px; }
+h2 { font-size: 22px; }
+h3 { font-size: 17px; }
+
+p { margin: 0 0 14px; }
+
+a {
+  color: #005a9c;
+  text-decoration: underline;
+}
+
+a:hover { color: #bb0a1e; }
+
+ul { margin: 0; padding: 0; list-style: none; }
+
+table { border-collapse: collapse; width: 100%; }
+
+/* ---------- 2. Layout classes ---------- */
+.container {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.section {
+  padding: 30px 0;
+  border-bottom: 1px solid #d9d3c4;
+}
+
+.section-intro {
+  color: #555555;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+/* ---------- 3. Header (Flexbox navigation) ---------- */
+.site-header {
+  background: #006b3f;
+  border-bottom: 4px solid #bb0a1e;
+  padding: 12px 0;
+}
+
+.header-inner {
+  display: flex;              /* Flexbox: header row */
+  flex-direction: column;     /* mobile: logo above menu */
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  color: #ffffff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  text-decoration: none;
+}
+
+.logo strong {
+  color: #ffd200;
+  font-weight: normal;
+}
+
+.main-nav { width: 100%; }
+
+.nav-list {
+  display: flex;              /* Flexbox navigation menu */
+  flex-wrap: wrap;
+  justify-content: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.nav-list li { width: 50%; }
+
+.nav-list a {
+  display: block;
+  color: #ffffff;
+  font-size: 14px;
+  text-align: center;
+  text-decoration: none;
+  padding: 9px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.nav-list a:hover,
+.nav-list a:focus {
+  background: #005231;
+}
+
+/* ---------- 4. Welcome section ---------- */
+/* ID selectors: one-off styling for each page section */
+#welcome {
+  background: #e9e4d6;
+  border-bottom: 1px solid #d9d3c4;
+}
+
+#schedule { background: #efece2; }
+
+#routes { background: #ffffff; }
+
+#contact { border-top: 4px solid #bb0a1e; }
+
+.welcome { padding: 34px 0; }
+
+#welcome h1 { color: #006b3f; }
+
+.welcome .lead {
+  font-size: 16px;
+  color: #333333;
+  margin-bottom: 18px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  background: #bb0a1e;
+  color: #ffffff;
+  font-size: 14px;
+  text-decoration: none;
+  padding: 10px 20px;
+  margin: 0 8px 10px 0;
+  border: 1px solid #8f0817;
+}
+
+.btn:hover,
+.btn:focus {
+  background: #8f0817;
+  color: #ffffff;
+}
+
+.btn-outline {
+  background: #ffffff;
+  color: #006b3f;
+  border: 1px solid #006b3f;
+}
+
+.btn-outline:hover,
+.btn-outline:focus {
+  background: #006b3f;
+  color: #ffffff;
+}
+
+.btn-small {
+  font-size: 13px;
+  padding: 6px 14px;
+}
+
+/* ---------- 5. Train schedule table ---------- */
+.schedule-table caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 13px;
+  font-style: italic;
+  color: #666666;
+  padding-bottom: 8px;
+}
+
+.schedule-table thead { display: none; }  /* mobile: stacked rows */
+
+.schedule-table tbody tr {
+  display: block;
+  background: #ffffff;
+  border: 1px solid #c9c2b0;
+  border-left: 4px solid #006b3f;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+}
+
+.schedule-table tbody td {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 5px 0;
+  border-bottom: 1px dotted #cccccc;
+  font-size: 14px;
+}
+
+.schedule-table tbody tr td:last-child { border-bottom: none; }
+
+.schedule-table tbody td::before {
+  content: attr(data-label);
+  font-weight: bold;
+  color: #006b3f;
+}
+
+/* ---------- 6. Routes section (CSS Grid) ---------- */
+.route-grid {
+  display: grid;                          /* CSS Grid */
+  grid-template-columns: 1fr;             /* mobile: one column */
+  gap: 16px;
+}
+
+.route-card {
+  background: #ffffff;
+  border: 1px solid #c9c2b0;
+  padding: 16px;
+}
+
+.route-card h3 {
+  color: #006b3f;
+  border-bottom: 2px solid #bb0a1e;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.route-distance {
+  font-size: 13px;
+  font-weight: bold;
+  color: #bb0a1e;
+  margin-bottom: 8px;
+}
+
+.route-via {
+  font-size: 14px;
+  color: #444444;
+  margin-bottom: 8px;
+}
+
+.route-fare {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+/* ---------- 7. Footer ---------- */
+.site-footer {
+  background: #222222;
+  color: #dddddd;
+  padding: 26px 0 0;
+}
+
+.site-footer h3 {
+  color: #ffd200;
+  font-size: 16px;
+  border-bottom: 1px solid #444444;
+  padding-bottom: 6px;
+}
+
+.site-footer p { font-size: 14px; }
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;    /* mobile: one column */
+  gap: 20px;
+  padding-bottom: 20px;
+}
+
+.footer-links li { margin-bottom: 6px; }
+
+.site-footer a {
+  color: #9fd8ff;
+  font-size: 14px;
+}
+
+.site-footer a:hover { color: #ffffff; }
+
+.footer-bottom {
+  border-top: 1px solid #444444;
+  padding: 12px 15px;
+  font-size: 13px;
+  color: #999999;
+}
+
+.footer-bottom p { margin: 0; }
+
+/* =========================================================
+   8. Media queries - enhance for larger screens
+   ========================================================= */
+
+/* Tablet: 600px and up */
+@media (min-width: 600px) {
+  h1 { font-size: 30px; }
+  h2 { font-size: 25px; }
+
+  .header-inner {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .main-nav { width: auto; }
+
+  .nav-list {
+    justify-content: flex-end;
+    border-top: none;
+  }
+
+  .nav-list li { width: auto; }
+
+  .nav-list a {
+    border-right: none;
+    border-bottom: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 4px 14px;
+  }
+
+  /* Table form on tablet and desktop */
+  .schedule-table thead { display: table-header-group; }
+
+  .schedule-table thead th {
+    background: #006b3f;
+    color: #ffffff;
+    font-size: 14px;
+    text-align: left;
+    padding: 9px 12px;
+    border: 1px solid #005231;
+  }
+
+  .schedule-table tbody tr {
+    display: table-row;
+    background: #ffffff;
+    border: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .schedule-table tbody tr:nth-child(even) { background: #efede4; }
+
+  .schedule-table tbody td {
+    display: table-cell;
+    padding: 8px 12px;
+    font-size: 14px;
+    border-bottom: 1px solid #dddddd;
+    border-right: 1px solid #dddddd;
+  }
+
+  .schedule-table tbody tr td:last-child { border-bottom: 1px solid #dddddd; }
+
+  .schedule-table tbody td::before { content: none; }
+
+  .route-grid { grid-template-columns: repeat(2, 1fr); }
+
+  .footer-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Desktop: 900px and up */
+@media (min-width: 900px) {
+  body { font-size: 16px; }
+
+  h1 { font-size: 34px; }
+  h2 { font-size: 28px; }
+
+  .section { padding: 40px 0; }
+  .welcome { padding: 46px 0; }
+
+  .route-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .route-card { padding: 18px; }
+
+  .footer-grid { grid-template-columns: repeat(3, 1fr); }
+}

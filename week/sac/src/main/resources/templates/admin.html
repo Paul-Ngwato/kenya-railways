@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Admin Panel')}"></head>
+<body>
+<nav th:replace="~{fragments :: sidebar}"></nav>
+<div class="container">
+  <h1>&#9881;&#65039; Admin Panel</h1>
+  <p class="subtitle">Platform-wide management &mdash; visible to administrators only</p>
+
+  <div class="admin-banner">
+    <span class="badge ok">ADMINISTRATOR MODE</span>
+    <span class="muted">You can manage users, the course catalog and monitor every schedule event on the platform.</span>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card"><div class="muted">Total users</div><div class="stat-num" th:text="${stats['users']}">0</div>
+      <span class="muted" th:text="${stats['students']} + ' students &middot; ' + ${stats['admins']} + ' admins'"></span></div>
+    <div class="card"><div class="muted">Courses / Enrollments</div><div class="stat-num" th:text="${stats['courses']}">0</div>
+      <span class="muted" th:text="${stats['enrollments']} + ' enrollments'"></span></div>
+    <div class="card"><div class="muted">Events</div><div class="stat-num" th:text="${stats['events']}">0</div>
+      <span class="muted" th:text="${stats['upcoming']} + ' upcoming'"></span></div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>Latest registered users</h2>
+      <table>
+        <tr><th>User</th><th>Role</th><th>Status</th></tr>
+        <tr th:each="u : ${recentUsers}">
+          <td><strong th:text="${u.username}">user</strong><br/><span class="muted" th:text="${u.fullName}">Name</span></td>
+          <td><span class="badge" th:classappend="${u.role.name() == 'ADMIN' ? 'warn' : 'CLASS'}" th:text="${u.role}">STUDENT</span></td>
+          <td><span class="badge" th:classappend="${u.active ? 'ok' : 'EXAM'}" th:text="${u.active ? 'ACTIVE' : 'DISABLED'}">ACTIVE</span></td>
+        </tr>
+      </table>
+      <a class="btn secondary small" th:href="@{/admin/users}">Manage all users &rarr;</a>
+    </div>
+    <div class="card">
+      <h2>System-wide upcoming events</h2>
+      <span class="muted" th:text="${stats['upcoming']} + ' upcoming of ' + ${stats['events']} + ' total events'"></span>
+      <table style="margin-top:8px">
+        <tr><th>Date</th><th>Event</th><th>Owner</th></tr>
+        <tr th:each="ev : ${recentEvents}">
+          <td th:text="${ev.date}">2026-09-20</td>
+          <td><span class="badge" th:classappend="${ev.type}" th:text="${ev.type}">CAT</span>
+              <span th:text="${ev.title}">CAT 1</span></td>
+          <td th:text="${ev.owner.username}">student</td>
+        </tr>
+      </table>
+      <a class="btn secondary small" href="#events">Event broadcaster &darr;</a>
+    </div>
+  </div>
+
+  <!-- ============ course catalog ============ -->
+  <div class="card" id="catalog">
+    <h2>Course catalog management</h2>
+    <p class="muted">Courses with no enrollments can be deleted. New courses immediately become joinable by students.</p>
+    <table>
+      <tr><th>Code</th><th>Title</th><th>Lecturer</th><th>Enrolled</th><th></th></tr>
+      <tr th:each="c : ${courses}">
+        <td><strong th:text="${c.code}">BIT 2104</strong></td>
+        <td th:text="${c.title}">Intro</td>
+        <td th:text="${c.lecturer} ?: '-'">-</td>
+        <td th:text="${courseCounts[c.id]}">0</td>
+        <td>
+          <form th:if="${courseCounts[c.id] == 0}" th:action="@{'/admin/courses/' + ${c.id} + '/delete'}" method="post" style="display:inline">
+            <button class="btn danger small" type="submit">Delete</button>
+          </form>
+          <span class="muted" th:if="${courseCounts[c.id] > 0}">has students</span>
+        </td>
+      </tr>
+    </table>
+    <form th:action="@{/admin/courses}" method="post" class="admin-form">
+      <div><label>Code</label><input name="code" placeholder="BIT 2301" required/></div>
+      <div><label>Title</label><input name="title" placeholder="Computer Networks" required/></div>
+      <div><label>Lecturer</label><input name="lecturer" placeholder="Dr. Somebody"/></div>
+      <div style="align-self:end"><button class="btn" type="submit">+ Add course</button></div>
+    </form>
+  </div>
+
+  <!-- ============ event broadcaster ============ -->
+  <div class="card" id="events">
+    <h2>Event broadcaster</h2>
+    <p class="muted">Create an event on <strong>your own calendar</strong>, or tick <em>broadcast</em> to push it to every student enrolled in the selected course (a tool for CAT/exam announcements).</p>
+    <form th:action="@{/admin/events}" method="post" class="admin-form">
+      <div><label>Title</label><input name="title" required placeholder="CAT 1"/></div>
+      <div><label>Type</label>
+        <select name="type">
+          <option>CAT</option><option>EXAM</option><option>CLASS</option><option>DEADLINE</option><option>OTHER</option>
+        </select></div>
+      <div><label>Date</label><input name="date" type="date" required/></div>
+      <div><label>Time</label><input name="time" type="time"/></div>
+      <div><label>Venue</label><input name="venue" placeholder="Main Hall"/></div>
+      <div><label>Course (for broadcast)</label>
+        <select name="courseId">
+          <option value="">&mdash; none &mdash;</option>
+          <option th:each="c : ${courses}" th:value="${c.id}" th:text="${c.code}">BIT 2104</option>
+        </select></div>
+      <div style="grid-column: 1 / -1">
+        <label style="display:flex; gap:8px; align-items:center">
+          <input type="checkbox" name="broadcast" value="1" style="width:auto"/>
+          Broadcast to all enrolled students of the course above
+        </label>
+      </div>
+      <div style="align-self:end"><button class="btn" type="submit">Create event</button></div>
+    </form>
+  </div>
+</div>
+</body>
+</html>

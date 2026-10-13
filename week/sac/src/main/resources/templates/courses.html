@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Courses')}"></head>
+<body>
+<nav th:replace="~{fragments :: sidebar}"></nav>
+<div class="container">
+  <h1>Course Cohort Network</h1>
+  <p class="subtitle">Students registered for the same units are automatically grouped</p>
+
+  <div class="card" th:each="en : ${enrollments}">
+    <h2>
+      <span th:text="${en.course.code}">BIT 2104</span>
+      <span class="muted" th:text="' — ' + ${en.course.title}">Intro to Programming</span>
+    </h2>
+    <p class="muted" th:if="${en.course.lecturer}" th:text="'Lecturer: ' + ${en.course.lecturer}">Lecturer: Mr. Otieno</p>
+
+    <h2 style="font-size:.95rem">Cohort mates</h2>
+    <p class="muted" th:if="${#lists.isEmpty(matesByCourse[en.course.id])}">No classmates enrolled yet.</p>
+    <ul class="pill-list">
+      <li th:each="mate : ${matesByCourse[en.course.id]}">
+        <span th:text="${mate.fullName} + ' (@' + ${mate.username} + ')'">Jane Doe (@jane)</span>
+      </li>
+    </ul>
+
+    <div style="display:flex; gap:8px; margin-top:12px">
+      <form th:action="@{'/courses/' + ${en.course.id} + '/leave'}" method="post"
+            onsubmit="return confirm('Leave this course cohort?')">
+        <button class="btn danger small" type="submit">Leave course</button>
+      </form>
+    </div>
+  </div>
+
+  <p class="flash warn" th:if="${#lists.isEmpty(enrollments)}"
+     style="background:#fef3c7;color:#92400e;border-radius:8px;padding:10px 14px">
+    You have not joined any course yet — pick from the list below.
+  </p>
+
+  <div class="card">
+    <h2>All courses</h2>
+    <table>
+      <tr><th>Code</th><th>Title</th><th>Lecturer</th><th></th></tr>
+      <tr th:each="c : ${allCourses}">
+        <td th:text="${c.code}">BIT 2104</td>
+        <td th:text="${c.title}">Introduction to Programming</td>
+        <td th:text="${c.lecturer} ?: '-'">-</td>
+        <td>
+          <form th:action="@{/courses/join}" method="post">
+            <input type="hidden" name="courseId" th:value="${c.id}"/>
+            <button class="btn small" type="submit">Join</button>
+          </form>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>
+</body>
+</html>

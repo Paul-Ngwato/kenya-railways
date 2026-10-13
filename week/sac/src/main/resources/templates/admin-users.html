@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Manage Users')}"></head>
+<body>
+<nav th:replace="~{fragments :: sidebar}"></nav>
+<div class="container">
+  <h1>&#128101; User management</h1>
+  <p class="subtitle">Change roles, activate/deactivate accounts and reset passwords</p>
+
+  <div class="card">
+    <form method="get" th:action="@{/admin/users}" style="display:flex; gap:10px; align-items:center">
+      <input name="q" th:value="${q}" placeholder="Search by username, name or email..." style="max-width:340px"/>
+      <button class="btn small" type="submit">Search</button>
+      <a class="btn secondary small" th:href="@{/admin/users}">Clear</a>
+    </form>
+  </div>
+
+  <div class="card">
+    <table>
+      <tr>
+        <th>ID</th><th>User</th><th>Email</th><th>Role</th><th>Courses</th><th>Status</th><th style="min-width:230px">Actions</th>
+      </tr>
+      <tr th:each="u : ${users}" th:classappend="${u.id == me.id} ? 'row-me'">
+        <td th:text="${u.id}">1</td>
+        <td><strong th:text="${u.username}">admin</strong><br/><span class="muted" th:text="${u.fullName}">Name</span></td>
+        <td th:text="${u.email}">a@b.c</td>
+        <td>
+          <form th:action="@{'/admin/users/' + ${u.id} + '/role'}" method="post" style="display:flex; gap:6px">
+            <input type="hidden" name="role" th:value="${u.role.name() == 'ADMIN' ? 'STUDENT' : 'ADMIN'}"/>
+            <span class="badge" th:classappend="${u.role.name() == 'ADMIN' ? 'warn' : 'CLASS'}" th:text="${u.role}">STUDENT</span>
+            <button class="btn secondary small" type="submit"
+                    th:text="${u.role.name() == 'ADMIN' ? '&darr; student' : '&uarr; admin'}">toggle</button>
+          </form>
+        </td>
+        <td th:text="${courseCounts[u.id]}">0</td>
+        <td><span class="badge" th:classappend="${u.active ? 'ok' : 'EXAM'}" th:text="${u.active ? 'ACTIVE' : 'DISABLED'}">ACTIVE</span></td>
+        <td>
+          <form th:action="@{'/admin/users/' + ${u.id} + '/toggle-active'}" method="post" style="display:inline">
+            <button class="btn secondary small" type="submit" th:disabled="${u.id == me.id}"
+                    th:text="${u.active ? 'Disable' : 'Enable'}">toggle</button>
+          </form>
+          <form th:action="@{'/admin/users/' + ${u.id} + '/reset-password'}" method="post" style="display:inline; gap:4px">
+            <input name="password" type="text" placeholder="new password" style="width:130px; display:inline-block" minlength="4" required/>
+            <button class="btn danger small" type="submit">Reset</button>
+          </form>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>
+</body>
+</html>

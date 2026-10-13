@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Dashboard')}"></head>
+<body>
+<nav th:replace="~{fragments :: sidebar}"></nav>
+<div class="container">
+
+  <!-- ======= greeting + quick actions ======= -->
+  <div class="dash-head">
+    <div>
+      <h1><span th:text="${greeting}">Good morning</span>, <span th:text="${me.fullName}">Vick</span> 👋</h1>
+      <p class="subtitle" th:text="${#temporals.format(day, 'EEEE, MMMM d, yyyy')}">Tuesday, September 15, 2026</p>
+    </div>
+    <div class="quick-actions">
+      <button class="btn" type="button" data-open-modal="#addActivityModal">＋ Add Activity</button>
+      <a class="btn secondary" href="#todayCards">✓ Mark Complete</a>
+      <a class="btn secondary" href="#todayCards">🔄 Report Change</a>
+      <a class="btn secondary" href="#journalCard">📝 Add Note</a>
+    </div>
+  </div>
+
+  <!-- ======= week strip date selector ======= -->
+  <div class="week-strip">
+    <a th:each="d : ${weekStrip}"
+       th:href="@{'/dashboard'(date=${d.iso})}"
+       th:classappend="${d.isSelected ? 'selected' : (d.isToday ? 'today' : '')}">
+      <span class="dow" th:text="${d.label}">MON</span>
+      <span class="dnum" th:text="${d.dayNum}">14</span>
+      <span class="dot" th:if="${d.isToday}">●</span>
+    </a>
+  </div>
+
+  <div class="dash-grid">
+    <!-- ======= main: today's floating cards ======= -->
+    <div class="dash-main">
+      <div class="card" id="todayCards">
+        <div class="today-head">
+          <div>
+            <h2>TODAY</h2>
+            <p class="muted" th:text="${#temporals.format(day, 'EEEE, MMMM d')}">Tuesday, September 15</p>
+          </div>
+          <button class="btn small" type="button" data-open-modal="#addActivityModal">＋ Add Activity</button>
+        </div>
+
+        <p class="muted" th:if="${#lists.isEmpty(cards)}">
+          Nothing scheduled for this day yet. Click ＋ Add Activity to plan your day.
+        </p>
+
+        <div class="act-cards">
+          <div class="act-card" th:each="c : ${cards}"
+               th:classappend="${c.isOff ? 'is-off' : (c.isDone ? 'is-done' : '')}">
+            <div class="act-top">
+              <span class="act-emoji" th:text="${c.emoji}">📚</span>
+              <div class="act-main">
+                <strong th:text="${c.title}">Mathematics</strong>
+                <div class="muted" th:text="${c.timeRange}">08:00 – 10:00</div>
+                <div class="muted" th:if="${c.moved}">
+                  📍 <s th:text="${c.prevVenue}">Lab 2</s> → <span th:text="${c.venue}">Lab 4</span>
+                </div>
+                <div class="muted" th:unless="${c.moved}"
+                     th:text="${c.venue != null ? '📍 ' + c.venue : ''}">📍 Room A</div>
+              </div>
+              <span class="status-pill" th:class="'st-' + ${c.status}" th:text="${c.statusLabel}">Upcoming</span>
+            </div>
+
+            <!-- ======= activity action panel ======= -->
+            <details class="act-panel">
+              <summary>What happened?</summary>
+              <div class="act-actions">
+                <form th:action="@{'/dashboard/activities/' + ${c.id} + '/status'}" method="post">
+                  <input type="hidden" name="day" th:value="${day}"/>
+                  <input type="hidden" name="status" value="COMPLETED"/>
+                  <button class="chip chip-ok" type="submit">✓ Class completed</button>
+                </form>
+                <details class="nested">
+                  <summary class="chip">🔄 Changed location</summary>
+                  <form class="mini-form" th:action="@{'/dashboard/activities/' + ${c.id} + '/venue'}" method="post">
+                    <input type="hidden" name="day" th:value="${day}"/>
+                    <label>Current location</label>
+                    <input type="text" th:value="${c.venue}" disabled/>
+                    <label>New location</label>
+                    <input name="venue" type="text" required placeholder="Laboratory 4"/>
+                    <label>Reason (optional)</label>
+                    <input name="reason" type="text" placeholder="Lecturer requested a different room"/>
+                    <button class="btn small" type="submit">Save Change</button>
+                  </form>
+                </details>
+                <details class="nested">
+                  <summary class="chip">↻ Rescheduled</summary>
+                  <form class="mini-form" th:action="@{'/dashboard/activities/' + ${c.id} + '/reschedule'}" method="post">
+                    <input type="hidden" name="day" th:value="${day}"/>
+                    <label>New date</label>
+                    <input name="newDate" type="date" th:value="${day}"/>
+                    <label>New start time</label>
+                    <input name="newTime" type="time"/>
+                    <button class="btn small" type="submit">Reschedule</button>
+                  </form>
+                </details>
+                <form th:action="@{'/dashboard/activities/' + ${c.id} + '/status'}" method="post">
+                  <input type="hidden" name="day" th:value="${day}"/>
+                  <input type="hidden" name="status" value="POSTPONED"/>
+                  <button class="chip chip-warn" type="submit">⏸ Class postponed</button>
+                </form>
+                <form th:action="@{'/dashboard/activities/' + ${c.id} + '/status'}" method="post">
+                  <input type="hidden" name="day" th:value="${day}"/>
+                  <input type="hidden" name="status" value="CANCELLED"/>
+                  <button class="chip chip-bad" type="submit">✕ Class cancelled</button>
+                </form>
+                <form th:action="@{'/dashboard/activities/' + ${c.id} + '/status'}" method="post">
+                  <input type="hidden" name="day" th:value="${day}"/>
+                  <input type="hidden" name="status" value="DID_NOT_HAPPEN"/>
+                  <button class="chip chip-bad" type="submit">🚫 Didn't happen</button>
+                </form>
+                <details class="nested">
+                  <summary class="chip">📝 Add note</summary>
+                  <form class="mini-form" th:action="@{'/dashboard/activities/' + ${c.id} + '/note'}" method="post">
+                    <input type="hidden" name="day" th:value="${day}"/>
+                    <textarea name="note" rows="2" placeholder="e.g. Ask lecturer about the assignment"></textarea>
+                    <button class="btn small" type="submit">Save note</button>
+                  </form>
+                </details>
+                <form th:if="${c.isDone or c.isOff}" th:action="@{'/dashboard/activities/' + ${c.id} + '/status'}" method="post">
+                  <input type="hidden" name="day" th:value="${day}"/>
+                  <input type="hidden" name="status" value="UPCOMING"/>
+                  <button class="chip" type="submit">↩ Reopen</button>
+                </form>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======= timeline ======= -->
+      <div class="card">
+        <h2>My Day — timeline</h2>
+        <p class="muted" th:if="${#lists.isEmpty(timeline)}">Your day is empty.</p>
+        <div class="timeline" th:if="${!#lists.isEmpty(timeline)}">
+          <div class="tl-row" th:each="r : ${timeline}">
+            <span class="tl-time" th:text="${r.time}">08:00</span>
+            <span class="tl-rail" th:classappend="${r.isBreak} ? 'tl-break' : ''"></span>
+            <span class="tl-body" th:if="${r.isBreak}">🍴 Break</span>
+            <span class="tl-body" th:if="${!r.isBreak}">
+              <span th:text="${r.emoji}">📚</span>
+              <strong th:text="${r.title}">Mathematics</strong>
+              <span class="muted" th:if="${r.venue}" th:text="'· ' + ${r.venue}">· Room A</span>
+              <span class="status-pill" th:class="'st-' + ${r.status}" th:text="${r.statusLabel}">Upcoming</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======= side column ======= -->
+    <div class="dash-side">
+      <div class="card">
+        <h2>Today's Summary</h2>
+        <div class="sum-rows">
+          <div><span>📚 Activities</span><strong th:text="${summary.total}">7</strong></div>
+          <div><span>✓ Completed</span><strong th:text="${summary.completed}">4</strong></div>
+          <div><span>⏳ Remaining</span><strong th:text="${summary.remaining}">2</strong></div>
+          <div><span>🔄 Changed</span><strong th:text="${summary.changed}">1</strong></div>
+        </div>
+        <div class="progress" th:if="${summary.total > 0}">
+          <div class="progress-bar"
+               th:style="'width:' + ${(summary.completed * 100) / summary.total} + '%'"></div>
+        </div>
+        <p class="muted" th:if="${summary.total > 0}"
+           th:text="${(summary.completed * 100) / summary.total} + '% complete'">50% complete</p>
+      </div>
+
+      <div class="card" th:if="${inboxPending > 0}">
+        <h2>📥 AI Inbox</h2>
+        <div class="announce" style="border-left-color:#2563eb">
+          <strong th:text="${inboxPending} + ' item' + (${inboxPending} == 1 ? '' : 's') + ' awaiting verification'">3 items awaiting verification</strong>
+          <div class="muted">AI extracted information that needs your confirmation before it reaches your calendar.</div>
+          <a th:href="@{/inbox}">Review now →</a>
+        </div>
+      </div>
+
+      <div class="card" th:if="${!#lists.isEmpty(plannerProjects)}">
+        <h2>🧠 Planner</h2>
+        <div class="update" th:each="p : ${plannerProjects}">
+          <div>
+            <strong><a th:href="@{'/planner/' + ${p.id}}" th:text="${p.name}">Website project</a></strong>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" th:style="'width:' + ${p.progress} + '%'"></div>
+          </div>
+          <div class="muted">
+            <span th:text="${p.progress} + '% complete'">62% complete</span>
+            <span th:if="${p.deadline != null}"
+                  th:text="' · due ' + ${#temporals.format(p.deadline, 'MMM d')}"> · due Oct 10</span>
+          </div>
+        </div>
+        <a class="btn secondary small" th:href="@{/planner}">Open Planner →</a>
+      </div>
+
+      <div class="card" th:if="${!#lists.isEmpty(important)}">
+        <h2>🔔 Important</h2>
+        <div class="announce" th:each="a : ${important}">
+          <strong th:text="${a.title}">Programming class has been moved</strong>
+          <div class="muted">
+            <span th:if="${a.moved}"><s th:text="${a.prevVenue}">Room B</s> → <span th:text="${a.venue}">Room C</span></span>
+            <span th:if="${a.time != ''}" th:text="${a.time}">2:00 PM</span>
+            <span th:text="${a.statusLabel}">Changed</span>
+          </div>
+          <a th:href="@{'/dashboard'(date=${day})}">View Activity →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Recent Updates</h2>
+        <p class="muted" th:if="${#lists.isEmpty(recentUpdates)}">No changes recorded today.</p>
+        <div class="update" th:each="u : ${recentUpdates}">
+          <div class="muted" th:text="${u.time}">10:42 AM</div>
+          <div><span th:text="${u.icon}">🔄</span> <span th:text="${u.label}">Chemistry moved Lab 2 → Lab 4</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Coming Up — tomorrow</h2>
+        <p class="muted" th:if="${#lists.isEmpty(tomorrow)}">Nothing scheduled tomorrow yet.</p>
+        <div class="next-day" th:each="line : ${tomorrow}">
+          <span th:text="${line}">📚 Database Systems — 8:00 AM</span>
+        </div>
+        <a class="btn secondary small" th:href="@{/schedule}">View Full Calendar →</a>
+      </div>
+
+      <!-- ======= My Day journal ======= -->
+      <div class="card" id="journalCard">
+        <h2>📝 My Day</h2>
+        <p class="muted">What do you want to remember about today?</p>
+        <form th:action="@{/dashboard/journal}" method="post">
+          <input type="hidden" name="day" th:value="${day}"/>
+          <textarea name="body" rows="3" th:text="${journal}"
+                    placeholder="Need to ask lecturer about the assignment..."></textarea>
+          <button class="btn small" type="submit">Save Note</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= my courses (kept from old dashboard) ======= -->
+  <div class="card">
+    <h2>My courses</h2>
+    <p class="muted" th:if="${#lists.isEmpty(enrollments)}">
+      You are not enrolled in any course yet — go to Courses to join one.</p>
+    <ul class="pill-list">
+      <li th:each="en : ${enrollments}">
+        <span>
+          <strong th:text="${en.course.code}">BIT 2104</strong>
+          <span class="muted" th:text="' — ' + ${en.course.title}">Intro</span>
+        </span>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- ======= Add Activity modal ======= -->
+<div class="modal-backdrop" id="addActivityModal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Add Activity</h2>
+      <button class="modal-close" type="button" data-close-modal>✕</button>
+    </div>
+    <form th:action="@{/dashboard/activities}" method="post" class="modal-form">
+      <label for="act-title">Activity name</label>
+      <input id="act-title" name="title" type="text" required placeholder="Mathematics Class"/>
+
+      <label for="act-type">Type</label>
+      <select id="act-type" name="type">
+        <option value="CLASS">📚 Class</option>
+        <option value="ASSIGNMENT">📝 Assignment</option>
+        <option value="STUDY">📖 Study</option>
+        <option value="PRACTICAL">🧪 Practical</option>
+        <option value="MEETING">📅 Meeting</option>
+        <option value="EVENT">🎯 Event</option>
+        <option value="WORK">💼 Work</option>
+        <option value="REMINDER">🔔 Reminder</option>
+        <option value="CAT">📝 CAT</option>
+        <option value="EXAM">🧠 Exam</option>
+        <option value="DEADLINE">⏰ Deadline</option>
+        <option value="OTHER">📌 Other</option>
+      </select>
+
+      <label for="act-date">Date</label>
+      <input id="act-date" name="date" type="date" required th:value="${day}"/>
+
+      <div class="two-col">
+        <div>
+          <label for="act-start">Start</label>
+          <input id="act-start" name="start" type="time"/>
+        </div>
+        <div>
+          <label for="act-end">End</label>
+          <input id="act-end" name="end" type="time"/>
+        </div>
+      </div>
+
+      <label for="act-venue">Location</label>
+      <input id="act-venue" name="venue" type="text" placeholder="Room A"/>
+
+      <label for="act-lecturer">Lecturer / Person</label>
+      <input id="act-lecturer" name="lecturer" type="text" placeholder="Dr. ___"/>
+
+      <label for="act-course">Course (optional)</label>
+      <select id="act-course" name="courseId">
+        <option value="">— none —</option>
+        <option th:each="en : ${enrollments}" th:value="${en.course.id}"
+                th:text="${en.course.code} + ' — ' + ${en.course.title}">BIT 2104</option>
+      </select>
+
+      <label for="act-notes">Notes</label>
+      <textarea id="act-notes" name="notes" rows="2"></textarea>
+
+      <button class="btn" type="submit">Add Activity</button>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

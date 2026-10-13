@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Dashboard')}"></head>
+<body>
+<nav th:replace="~{fragments :: sidebar}"></nav>
+<div class="container">
+  <h1 th:text="'Welcome, ' + ${me.fullName}">Welcome</h1>
+  <p class="subtitle">Administrator dashboard — platform-wide overview</p>
+
+  <div class="admin-banner">
+    <span class="badge ok">ADMINISTRATOR MODE</span>
+    <span class="muted">You are viewing the platform as an administrator. Students see a personal academic snapshot instead.</span>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <div class="muted">Users</div>
+      <div class="stat-num" th:text="${stats['users']}">0</div>
+      <span class="muted" th:text="${stats['students']} + ' students'"></span>
+    </div>
+    <div class="card">
+      <div class="muted">Courses</div>
+      <div class="stat-num" th:text="${stats['courses']}">0</div>
+      <span class="muted" th:text="${stats['enrollments']} + ' enrollments'"></span>
+    </div>
+    <div class="card">
+      <div class="muted">Learning activity</div>
+      <div class="stat-num" th:text="${stats['enrollments']}">0</div>
+      <span class="muted">enrolled students across all courses</span>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>Upcoming events (all users)</h2>
+      <p class="muted" th:if="${#lists.isEmpty(upcoming)}">No upcoming events on any calendar.</p>
+      <table th:if="${!#lists.isEmpty(upcoming)}">
+        <tr><th>Date</th><th>Event</th><th>Owner</th></tr>
+        <tr th:each="ev : ${upcoming}">
+          <td th:text="${ev.date}">2026-09-20</td>
+          <td><span class="badge" th:classappend="${ev.type}" th:text="${ev.type}">CAT</span>
+              <span th:text="${ev.title}">CAT 1</span></td>
+          <td th:text="${ev.owner.username}">student</td>
+        </tr>
+      </table>
+    </div>
+    <div class="card">
+      <h2>Latest registered users</h2>
+      <table>
+        <tr><th>User</th><th>Role</th></tr>
+        <tr th:each="u : ${recentUsers}">
+          <td><strong th:text="${u.username}">user</strong></td>
+          <td><span class="badge" th:classappend="${u.role.name() == 'ADMIN' ? 'warn' : 'CLASS'}" th:text="${u.role}">STUDENT</span></td>
+        </tr>
+      </table>
+      <a class="btn secondary small" th:href="@{/admin/users}">Manage all users &rarr;</a>
+    </div>
+  </div>
+
+  <div class="card admin-quick">
+    <h2>Quick actions</h2>
+    <a class="btn" th:href="@{/admin}">&#9881;&#65039; Open Admin Panel</a>
+    <a class="btn secondary" th:href="@{/admin/users}">&#128101; Manage users</a>
+    <a class="btn secondary" th:href="@{'/admin#events'}">&#128197; Broadcast an event</a>
+  </div>
+</div>
+</body>
+</html>

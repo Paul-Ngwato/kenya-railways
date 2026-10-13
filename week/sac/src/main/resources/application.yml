@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: smart-academic-companion
+  datasource:
+    url: jdbc:postgresql://localhost:5432/smart_academic_companion
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:123456789}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+  thymeleaf:
+    cache: false
+
+app:
+  uploads-dir: ./uploads
+  # Optional LLM API (OpenAI-compatible). Leave key blank to use the built-in
+  # offline fallback date extractor. Set a vision-capable model (e.g. gpt-4o-mini)
+  # to enable image (photo/screenshot) -> calendar event extraction.
+  llm:
+    enabled: true
+    api-url: https://api.openai.com/v1/chat/completions
+    api-key: ${OPENAI_API_KEY:}
+    model: gpt-4o-mini
+  # Offline OCR fallback for image uploads (used when the LLM is off or fails).
+  ocr:
+    enabled: true
+    tessdata-path: ./tessdata
+
+logging:
+  level:
+    com.ueab.sac: INFO

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${title} + ' · Smart Academic Companion'">Smart Academic Companion</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}"/>
+<link rel="stylesheet" th:href="@{/css/shadcn.css}"/>
+  <script th:src="@{/js/app.js}" defer></script>
+</head>
+
+<body>
+<!-- ======= sidebar navigation ======= -->
+<div th:fragment="sidebar" class="sb-root">
+  <button class="sb-toggle" type="button" aria-label="Toggle menu"
+          onclick="document.body.classList.toggle('sidebar-open')">☰</button>
+
+  <nav class="sidebar">
+    <div class="sb-brand">🎓 STUDENT <span>HUB</span></div>
+
+    <div class="sb-section">
+      <a th:href="@{/dashboard}" class="sb-item">🏠 Dashboard</a>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-group">📥 AI Inbox</div>
+      <a th:href="@{/inbox}" class="sb-item sub">Upload · Paste</a>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-group">👁 Viewer</div>
+      <a th:href="@{/dashboard}" class="sb-item sub">Daily view</a>
+      <a th:href="@{/schedule}" class="sb-item sub">Calendar</a>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-group">➕ Add</div>
+      <a th:href="@{/schedule#add-form}" class="sb-item sub">Activity</a>
+      <a th:href="@{/dashboard#addActivityModal}" class="sb-item sub">Quick add</a>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-group">🧠 Planner</div>
+      <a th:href="@{/planner}" class="sb-item sub">My Projects</a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <a th:href="@{/courses}" class="sb-item">📚 Courses</a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')" class="sb-item admin-link">⚙ Admin Panel</a>
+    </div>
+
+    <div class="sb-spacer"></div>
+
+    <div class="sb-user">
+      <span class="sb-username" th:text="${#authentication.name}">user</span>
+      <span class="badge role-badge" sec:authorize="hasRole('ADMIN')">ADMIN</span>
+      <span class="badge role-badge student-badge"
+            sec:authorize="hasRole('STUDENT') and not hasRole('ADMIN')">STUDENT</span>
+      <form th:action="@{/logout}" method="post">
+        <button class="btn-logout" type="submit">Logout</button>
+      </form>
+    </div>
+  </nav>
+</div>
+
+</body>
+</html>

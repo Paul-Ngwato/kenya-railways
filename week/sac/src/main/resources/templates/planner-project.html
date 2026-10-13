@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Planner — Project')}"></head>
+<body>
+<nav th:replace="~{fragments :: sidebar}"></nav>
+<div class="container">
+
+  <div class="dash-head">
+    <div>
+      <a class="muted" th:href="@{/planner}">← All projects</a>
+      <h1 th:text="${project.name}">Website Project</h1>
+      <p class="subtitle" th:if="${project.deadline}"
+         th:text="'⏰ Deadline: ' + ${#temporals.format(project.deadline, 'EEEE, MMMM d, yyyy')}">Deadline: October 10</p>
+    </div>
+    <div class="quick-actions">
+      <form th:action="@{'/planner/' + ${project.id} + '/schedule'}" method="post">
+        <button class="btn secondary" type="submit">🔄 Re-fit schedule</button>
+      </form>
+      <form th:action="@{'/planner/' + ${project.id} + '/accept'}" method="post"
+            th:if="${#lists.isEmpty(tasks) == false}">
+        <button class="btn" type="submit">✓ Accept plan → calendar</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="proj-top">
+      <h2>Progress</h2>
+      <strong th:text="${project.progressPercent} + '%'">62%</strong>
+    </div>
+    <div class="progress">
+      <div class="progress-bar" th:style="'width:' + ${project.progressPercent} + '%'"></div>
+    </div>
+    <p class="muted" th:if="${project.details}" th:text="${project.details}" style="margin-top:10px">Details…</p>
+  </div>
+
+  <div class="card">
+    <h2>Suggested plan</h2>
+    <p class="muted">
+      Sessions marked <span class="badge">PLANNED</span> are proposals only — nothing is on your calendar
+      until you accept the plan. The scheduler skips your busy hours and never puts a task before
+      the one it depends on.</p>
+
+    <p class="muted" th:if="${#lists.isEmpty(tasks)}">No tasks yet — click 🔄 Re-fit schedule.</p>
+
+    <div class="plan-list" th:if="${!#lists.isEmpty(tasks)}">
+      <div class="plan-row" th:each="t, it : ${tasks}">
+        <div class="plan-rail">
+          <span class="plan-num" th:text="${it.count}">1</span>
+          <span class="plan-arrow" th:if="${!it.last}">↓</span>
+        </div>
+        <div class="plan-body">
+          <div class="plan-title-row">
+            <strong th:text="${t.title}">Research</strong>
+            <span class="badge" th:classappend="${t.status}"
+                  th:text="${t.status}">SCHEDULED</span>
+          </div>
+          <div class="muted" th:if="${t.plannedDate != null}">
+            📅 <span th:text="${#temporals.format(t.plannedDate, 'EEE, MMM d')}">Wed, Sep 16</span>
+            <span th:if="${t.plannedStart != null}"
+                  th:text="${#temporals.format(t.plannedStart, 'HH:mm')} + ' – ' + ${#temporals.format(t.plannedEnd, 'HH:mm')}">14:00 – 16:00</span>
+            <span th:text="' · ' + ${t.durationMinutes} + ' min'"> · 90 min</span>
+          </div>
+          <div class="muted" th:if="${t.plannedDate == null and t.status.name() == 'PLANNED'}">
+            Not placed yet — the calendar is too full before the deadline. Re-fit the schedule or shorten tasks.
+          </div>
+
+          <details class="act-panel">
+            <summary>Actions</summary>
+            <div class="act-actions">
+              <form th:if="${t.status.name() != 'DONE' and t.status.name() != 'SKIPPED'}"
+                    th:action="@{'/planner/tasks/' + ${t.id} + '/complete'}" method="post">
+                <input type="hidden" name="project" th:value="${project.id}"/>
+                <button class="chip chip-ok" type="submit">✓ Done</button>
+              </form>
+              <form th:if="${t.status.name() != 'DONE' and t.status.name() != 'SKIPPED'}"
+                    th:action="@{'/planner/tasks/' + ${t.id} + '/skip'}" method="post">
+                <input type="hidden" name="project" th:value="${project.id}"/>
+                <button class="chip chip-warn" type="submit">⤼ Skip</button>
+              </form>
+              <form th:if="${t.status.name() == 'DONE' or t.status.name() == 'SKIPPED'}"
+                    th:action="@{'/planner/tasks/' + ${t.id} + '/reopen'}" method="post">
+                <input type="hidden" name="project" th:value="${project.id}"/>
+                <button class="chip" type="submit">↩ Reopen</button>
+              </form>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Danger zone</h2>
+    <form th:action="@{'/planner/' + ${project.id} + '/delete'}" method="post"
+          onsubmit="return confirm('Delete this project and its calendar sessions?')">
+      <button class="btn danger small" type="submit">Delete project</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

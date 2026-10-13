@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Register')}"></head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1>Create account</h1>
+    <p class="sub">Join your course cohorts on Smart Academic Companion</p>
+
+    <p class="flash err" th:if="${param.error}">Username or email already in use.</p>
+
+    <form th:action="@{/register}" method="post">
+      <label for="fullName">Full name</label>
+      <input id="fullName" name="fullName" type="text" required/>
+
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" required/>
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required/>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required minlength="4"/>
+
+      <label for="courseCodes">Course codes (comma-separated, e.g. BIT 2104, BIT 2105)</label>
+      <input id="courseCodes" name="courseCodes" type="text"
+             placeholder="BIT 2104, BIT 2105, BIT 2201"/>
+
+      <button class="btn" type="submit">Register</button>
+    </form>
+
+    <p class="auth-note">Already registered? <a th:href="@{/login}">Login</a></p>
+  </div>
+</div>
+</body>
+</html>

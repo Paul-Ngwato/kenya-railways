@@ -1,0 +1,20 @@
+# Build output
+week/sac/target/
+
+# Logs
+*.log
+
+# Local uploads (runtime data)
+week/sac/uploads/*
+!week/sac/uploads/.gitkeep
+
+# Tooling / workspace metadata
+.freebuff/
+**/.freebuff/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.iml
+.idea/
+.vscode/

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Planner')}"></head>
+<body>
+<nav th:replace="~{fragments :: sidebar}"></nav>
+<div class="container">
+
+  <div class="dash-head">
+    <div>
+      <h1>🧠 Planner</h1>
+      <p class="subtitle">Give the AI a goal and a deadline. It builds an ordered plan and fits the work sessions around your real calendar — you accept before anything is added.</p>
+    </div>
+    <button class="btn" type="button" data-open-modal="#newProjectModal">＋ New Project</button>
+  </div>
+
+  <div class="dash-grid">
+    <!-- ======= projects ======= -->
+    <div>
+      <div class="card">
+        <h2>My Projects</h2>
+        <p class="muted" th:if="${#lists.isEmpty(projects)}">
+          No projects yet. Click ＋ New Project and tell the AI what you need to finish and when.</p>
+
+        <div class="proj-list">
+          <a class="proj-card" th:each="p : ${projects}" th:href="@{'/planner/' + ${p.id}}">
+            <div class="proj-top">
+              <strong th:text="${p.name}">Website Project</strong>
+              <span class="badge" th:classappend="${p.status == 'COMPLETED'} ? 'ok' : 'warn'"
+                    th:text="${p.status}">ACTIVE</span>
+            </div>
+            <div class="muted" th:if="${p.deadline}">
+              ⏰ Deadline: <span th:text="${#temporals.format(p.deadline, 'MMM d, yyyy')}">Oct 10, 2026</span>
+            </div>
+            <div class="progress">
+              <div class="progress-bar" th:style="'width:' + ${p.progressPercent} + '%'"></div>
+            </div>
+            <div class="muted" th:text="${p.progressPercent} + '% complete'">62% complete</div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======= upcoming planner sessions ======= -->
+    <div>
+      <div class="card">
+        <h2>Upcoming work sessions</h2>
+        <p class="muted" th:if="${#lists.isEmpty(upcomingSessions)}">
+          No scheduled sessions yet — create a project to generate a plan.</p>
+        <div class="update" th:each="t : ${upcomingSessions}">
+          <div>
+            <strong th:text="${t.title}">Research</strong>
+            <span class="badge" th:text="${t.project.name}">Website Project</span>
+          </div>
+          <div class="muted">
+            <span th:text="${#temporals.format(t.plannedDate, 'EEE, MMM d')}">Wed, Sep 16</span>
+            <span th:if="${t.plannedStart != null}"
+                  th:text="${#temporals.format(t.plannedStart, 'HH:mm')} + ' – ' + ${#temporals.format(t.plannedEnd, 'HH:mm')}">14:00 – 16:00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======= new project modal ======= -->
+<div class="modal-backdrop" id="newProjectModal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h2>New Planner Project</h2>
+      <button class="modal-close" type="button" data-close-modal>✕</button>
+    </div>
+    <form th:action="@{/planner/create}" method="post" class="modal-form">
+      <label for="pj-name">What do you need to finish?</label>
+      <input id="pj-name" name="name" type="text" required placeholder="Website for web development course"/>
+
+      <label for="pj-details">Details (optional)</label>
+      <textarea id="pj-details" name="details" rows="3"
+                placeholder="Requirements, technologies, group members…"></textarea>
+
+      <label for="pj-deadline">Deadline</label>
+      <input id="pj-deadline" name="deadline" type="date"/>
+
+      <label class="check-row">
+        <input type="checkbox" name="autoSchedule" value="true" checked style="width:auto"/>
+        <span>Fit sessions around my existing schedule automatically</span>
+      </label>
+
+      <button class="btn" type="submit">Generate Plan</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('[data-open-modal]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var m = document.querySelector(btn.getAttribute('data-open-modal'));
+      if (m) m.hidden = false;
+    });
+  });
+  document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      btn.closest('.modal-backdrop').hidden = true;
+    });
+  });
+  document.querySelectorAll('.modal-backdrop').forEach(function (bd) {
+    bd.addEventListener('click', function (e) { if (e.target === bd) bd.hidden = true; });
+  });
+</script>
+</body>
+</html>

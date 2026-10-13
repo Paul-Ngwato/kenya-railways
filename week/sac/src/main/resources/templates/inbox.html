@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('AI Inbox')}"></head>
+<body>
+<nav th:replace="~{fragments :: sidebar}"></nav>
+<div class="container">
+
+  <div class="dash-head">
+    <div>
+      <h1>📥 AI Inbox</h1>
+      <p class="subtitle">Give the system information in whatever form you have it. AI will organize it — you stay in control.</p>
+    </div>
+  </div>
+
+  <div class="flash ok" th:if="${flashMsg}" th:text="${flashMsg}">Saved</div>
+
+  <div class="dash-grid">
+    <!-- ======= left: capture ======= -->
+    <div>
+      <div class="card">
+        <h2>📄 Upload files &amp; photos</h2>
+        <p class="muted">Timetables, exam schedules, assignment sheets, memos, notices — as documents (<em>.docx, .pptx, .xlsx, .pdf, .txt</em>) or images (<em>.png, .jpg</em>). Photos and screenshots are read by AI vision (or offline OCR), and the events found in them are added to your inbox for a quick check.</p>
+        <form th:action="@{/inbox/upload}" method="post" enctype="multipart/form-data">
+          <input type="file" name="files" multiple required accept=".docx,.pptx,.xlsx,.pdf,.txt,.png,.jpg,.jpeg,.gif,.bmp,.webp,image/*"/>
+          <button class="btn" type="submit">Upload &amp; Extract</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>💬 Paste anything</h2>
+        <p class="muted">A WhatsApp message, a class group announcement, a notice text…</p>
+        <form th:action="@{/inbox/paste}" method="post">
+          <textarea name="text" rows="4" required
+                    placeholder="e.g. Guys, our database class has been moved to Friday at 2pm in Lab 3..."></textarea>
+          <button class="btn" type="submit">Send to AI</button>
+        </form>
+      </div>
+
+      <!-- ======= verification stepper ======= -->
+      <div class="card" id="verify" th:if="${current != null}">
+        <div class="verify-head">
+          <h2>🤖 AI found information</h2>
+          <span class="badge warn" th:text="${pending.size()} + ' awaiting verification'">3 awaiting verification</span>
+        </div>
+
+        <!-- progress dots -->
+        <div class="verify-dots">
+          <a th:each="p, it : ${pending}"
+             th:classappend="${p.id == current.id} ? 'dot-now' : ''"
+             th:href="@{'/inbox?verify=' + ${p.id}}"
+             th:title="${p.title}">
+            <span class="vd" th:text="${it.count}">1</span>
+          </a>
+        </div>
+
+        <!-- item card -->
+        <div class="verify-card">
+          <div class="verify-meta">
+            <span class="badge" th:classappend="${current.sourceType}"
+                  th:text="${current.sourceLabel}">WhatsApp · Class Group</span>
+            <span class="badge warn" th:if="${current.duplicateSuspect}">⚠ Possible duplicate</span>
+          </div>
+
+          <details class="verify-raw-wrap">
+            <summary>Source text</summary>
+            <blockquote class="verify-raw" th:text="${current.rawText}">Guys, our database class...</blockquote>
+          </details>
+
+          <div class="verify-banner ok" th:if="${current.weeklyDays}">
+            🔁 <strong>Weekly class</strong> — confirming adds this class on every
+            <strong th:text="${current.weeklyDays}">tue,thu</strong> for the chosen number of weeks.
+          </div>
+
+          <div class="verify-banner warn" th:if="${current.warning}">
+            ⚠️ <span th:text="${current.warning}">No date was found — please set one before confirming.</span>
+          </div>
+
+          <!-- ======= solo add form ======= -->
+          <form th:action="@{'/inbox/' + ${current.id} + '/confirm'}" method="post" class="verify-form">
+            <label>Title</label>
+            <input name="title" required th:value="${current.title}"/>
+
+            <div class="two-col">
+              <div>
+                <label>Type</label>
+                <select name="type">
+                  <option th:each="t : ${currentTypeOptions}" th:value="${t}"
+                          th:selected="${t == current.eventType}"
+                          th:text="${t}">CLASS</option>
+                </select>
+              </div>
+              <div>
+                <label>Date</label>
+                <input type="date" name="date" required
+                       th:value="${current.eventDate} ?: ${suggestedDate}"/>
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label>Start</label>
+                <input type="time" name="start" th:value="${current.eventTime}"/>
+              </div>
+              <div>
+                <label>End</label>
+                <input type="time" name="end" th:value="${current.endTime}"/>
+              </div>
+            </div>
+
+            <div class="two-col" th:if="${current.weeklyDays}">
+              <div>
+                <label>Repeat for (weeks)</label>
+                <select name="weeks">
+                  <option th:each="w : ${#numbers.sequence(1, 20)}"
+                          th:value="${w}" th:text="${w == 1 ? 'Just once (no repeat)' : w + ' weeks'}"
+                          th:selected="${suggestedWeeks > 0 ? w == suggestedWeeks : w == 12}">12 weeks</option>
+                </select>
+              </div>
+              <div><!-- grid balance --></div>
+            </div>
+
+            <label>Location</label>
+            <input name="venue" th:value="${current.venue}" placeholder="Laboratory 3"/>
+
+            <label>Notes (optional)</label>
+            <textarea name="notes" rows="2"></textarea>
+
+            <div class="verify-actions">
+              <button class="btn" type="submit">✓ Add to calendar</button>
+            </div>
+          </form>
+
+            <!-- live preview of the weekly expansion -->
+            <div class="verify-preview" th:if="${current.weeklyDays}"
+                 id="weeklyPreview"
+                 th:attr="data-days=${current.weeklyDays},data-start=${current.eventTime},data-end=${current.endTime},data-first=${current.eventDate} ?: ${suggestedDate}">
+              ⏳ Previewing…
+            </div>
+          <div class="verify-sideactions">
+            <form th:if="${current.duplicateSuspect}"
+                  th:action="@{'/inbox/' + ${current.id} + '/keep-existing'}" method="post">
+              <button class="btn secondary small" type="submit">Keep existing</button>
+            </form>
+            <button class="btn danger small" type="button"
+                    th:attr="data-open-modal='reject' + ${current.id} + 'Modal'">✕ Reject…</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" th:if="${current == null}">
+        <h2>✅ All clear</h2>
+        <p class="muted">Nothing is awaiting verification. Anything you upload or paste will appear here for a quick check before it touches your calendar.</p>
+        <a class="btn secondary small" th:href="@{/dashboard}">Back to Dashboard →</a>
+      </div>
+    </div>
+
+    <!-- ======= right: history ======= -->
+    <div>
+      <div class="card">
+        <h2>Recently processed</h2>
+        <p class="muted" th:if="${#lists.isEmpty(history)}">Nothing processed yet.</p>
+        <div class="update" th:each="h : ${history}">
+          <div>
+            <span class="badge" th:classappend="${h.status}"
+                  th:text="${h.status}">CONFIRMED</span>
+            <strong th:text="${h.title}">Database Systems</strong>
+          </div>
+          <div class="muted" th:text="${h.sourceLabel}">Pasted text</div>
+          <form th:action="@{'/inbox/history/' + ${h.id} + '/delete'}" method="post" style="margin-top:6px">
+            <button class="btn danger small" type="submit"
+                    onclick="return confirm('Remove this item from history?')">🗑 Remove</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======= reject confirmation modal ======= -->
+<div class="modal-backdrop" th:if="${current != null}"
+     th:attr="id='reject' + ${current.id} + 'Modal'" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Reject this item?</h2>
+      <button class="modal-close" type="button" data-close-modal>✕</button>
+    </div>
+    <p class="muted">
+      <strong th:text="${current.title}">Item title</strong><br/>
+      <span th:text="${current.sourceLabel}">source</span> — it will be removed permanently.
+      Nothing will be added to your calendar.
+    </p>
+    <form th:action="@{'/inbox/' + ${current.id} + '/reject'}" method="post" class="modal-form">
+      <button class="btn danger" type="submit">✕ Yes, reject &amp; remove</button>
+      <button class="btn secondary" type="button" data-close-modal>Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  // live preview: "N classes · Sep 17 → Dec 8" for weekly rows
+  (function () {
+    var box = document.getElementById('weeklyPreview');
+    if (!box) return;
+    var days = (box.dataset.days || '').split(',').filter(Boolean);
+    var dayMap = {mon:1, tue:2, wed:3, thu:4, fri:5, sat:6, sun:7};
+    var target = days.map(function (d) { return dayMap[d.trim()]; }).filter(Boolean);
+    if (!target.length) return;
+
+    function fmt(d) {
+      return d.toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+    }
+
+    function render() {
+      var dateInput = document.querySelector('input[name=date]');
+      var weeksSel = document.querySelector('select[name=weeks]');
+      if (!dateInput || !dateInput.value) {
+        box.textContent = 'Pick a start date to see the schedule.';
+        return;
+      }
+      var start = new Date(dateInput.value + 'T00:00:00');
+      var weeks = weeksSel ? parseInt(weeksSel.value, 10) || 1 : 1;
+      var last = new Date(start.getTime());
+      last.setDate(last.getDate() + weeks * 7 - 1);
+
+      // first occurrence on/after start
+      var first = new Date(start.getTime());
+      while (target.indexOf(first.getDay()) === -1) first.setDate(first.getDate() + 1);
+
+      var count = 0;
+      var cursor = new Date(first.getTime());
+      while (cursor <= last) {
+        if (target.indexOf(cursor.getDay()) !== -1) count++;
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      var time = box.dataset.start ? ' · ' + box.dataset.start.slice(0, 5)
+               + (box.dataset.end ? '-' + box.dataset.end.slice(0, 5) : '') : '';
+      box.innerHTML = '<strong>' + count + ' classes</strong> will be added · '
+        + fmt(first) + ' → ' + fmt(last) + time
+        + ' <span class="muted">(every ' + days.join(' & ') + ')</span>';
+    }
+
+    render();
+    var dateInput = document.querySelector('input[name=date]');
+    var weeksSel = document.querySelector('select[name=weeks]');
+    if (dateInput) dateInput.addEventListener('change', render);
+    if (weeksSel) weeksSel.addEventListener('change', render);
+  })();
+
+  document.querySelectorAll('[data-open-modal]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var m = document.getElementById(btn.getAttribute('data-open-modal'));
+      if (m) m.hidden = false;
+    });
+  });
+  document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      btn.closest('.modal-backdrop').hidden = true;
+    });
+  });
+  document.querySelectorAll('.modal-backdrop').forEach(function (bd) {
+    bd.addEventListener('click', function (e) { if (e.target === bd) bd.hidden = true; });
+  });
+</script>
+</body>
+</html>

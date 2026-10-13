@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Schedule')}"></head>
+<body>
+<nav th:replace="~{fragments :: sidebar}"></nav>
+<div class="container">
+  <h1>Schedule Core</h1>
+  <p class="subtitle">Timetable, CATs and exams — everything on one calendar</p>
+
+  <div class="card">
+    <div class="cal-header">
+      <div class="cal-nav">
+        <a th:href="@{/schedule(year=${yearMonth.minusMonths(1).year}, month=${yearMonth.minusMonths(1).monthValue}, view=${view})}">&larr; Prev</a>
+      </div>
+      <div class="month" th:text="${yearMonth.month} + ' ' + ${yearMonth.year}">September 2026</div>
+      <div class="cal-nav">
+        <a th:href="@{/schedule(year=${yearMonth.plusMonths(1).year}, month=${yearMonth.plusMonths(1).monthValue}, view=${view})}">Next &rarr;</a>
+      </div>
+    </div>
+
+    <div class="cal-filters">
+      <a th:class="'chip' + (${view} == 'all' ? ' chip-on' : '')"
+         th:href="@{/schedule(view='all')}">All</a>
+      <a th:class="'chip' + (${view} == 'academic' ? ' chip-on' : '')"
+         th:href="@{/schedule(view='academic')}">🎓 Academic</a>
+      <a th:class="'chip' + (${view} == 'co' ? ' chip-on' : '')"
+         th:href="@{/schedule(view='co')}">🏅 Co-curricular</a>
+      <a class="chip chip-export" th:href="@{/schedule/events.ics(userId=${me.id})}">⬇ Export .ics</a>
+    </div>
+
+    <div class="cal-grid">
+      <div class="cal-dow">Mon</div><div class="cal-dow">Tue</div><div class="cal-dow">Wed</div>
+      <div class="cal-dow">Thu</div><div class="cal-dow">Fri</div><div class="cal-dow">Sat</div>
+      <div class="cal-dow">Sun</div>
+
+      <th:block th:each="i : ${#numbers.sequence(0, yearMonth.lengthOfMonth() - 1)}">
+        <th:block th:with="day=${i == 0 ? T(java.time.LocalDate).of(yearMonth.year, yearMonth.monthValue, 1)
+                                  : T(java.time.LocalDate).of(yearMonth.year, yearMonth.monthValue, 1).plusDays(i)}">
+          <!-- leading blanks -->
+          <th:block th:if="${i == 0 and day.dayOfWeek.value != 1}">
+            <div class="cal-cell empty" th:each="p : ${#numbers.sequence(1, day.dayOfWeek.value - 1)}"></div>
+          </th:block>
+          <div class="cal-cell" th:classappend="${day.equals(T(java.time.LocalDate).now())} ? 'today'">
+            <span class="daynum" th:text="${day.dayOfMonth}">1</span>
+            <a th:each="ev : ${events}"
+               th:if="${ev.date != null and ev.date.equals(day)}"
+               th:class="'cal-ev ' + ${ev.type}"
+               th:href="@{/schedule}"
+               th:text="${ev.startTime != null ? ev.startTime.toLocalTime() + ' ' : ''} + ${ev.title}">
+              CAT 1
+            </a>
+          </div>
+        </th:block>
+      </th:block>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>Add event</h2>
+      <form th:action="@{/schedule/events}" method="post">
+        <label>Title</label>
+        <input name="title" required/>
+        <label>Type</label>
+        <select name="type">
+          <optgroup label="Academic">
+            <option value="CLASS">Class</option>
+            <option value="CAT">CAT</option>
+            <option value="EXAM">Exam</option>
+            <option value="DEADLINE">Deadline</option>
+            <option value="ASSIGNMENT">Assignment</option>
+            <option value="PRACTICAL">Practical</option>
+            <option value="STUDY">Study</option>
+          </optgroup>
+          <optgroup label="Co-curricular">
+            <option value="CLUB">Club / Society</option>
+            <option value="SPORT">Sport</option>
+            <option value="WORSHIP">Worship</option>
+            <option value="VOLUNTEER">Volunteer</option>
+          </optgroup>
+          <optgroup label="Other">
+            <option value="MEETING">Meeting</option>
+            <option value="EVENT">Event</option>
+            <option value="WORK">Work</option>
+            <option value="REMINDER">Reminder</option>
+            <option value="OTHER">Other</option>
+          </optgroup>
+        </select>
+        <label>Date</label>
+        <input type="date" name="date" required/>
+        <label>Time (optional)</label>
+        <input type="time" name="time"/>
+        <label>Venue (optional)</label>
+        <input name="venue"/>
+        <label>Course (optional)</label>
+        <select name="courseId">
+          <option value="">— none —</option>
+          <option th:each="c : ${myCourses}" th:value="${c.id}" th:text="${c.code}">BIT 2104</option>
+        </select>
+        <label>Notes (optional)</label>
+        <textarea name="notes" rows="2"></textarea>
+        <button class="btn" type="submit">Add to calendar</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>This month</h2>
+      <p class="muted" th:if="${#lists.isEmpty(events)}">No events this month.</p>
+      <ul class="pill-list">
+        <li th:each="ev : ${events}">
+          <span>
+            <span class="badge" th:classappend="${ev.type}" th:text="${ev.type}">CAT</span>
+            <strong th:text="${ev.date}">2026-09-20</strong>
+            <span th:text="${ev.title}">CAT 1</span>
+            <span class="muted" th:if="${ev.venue}" th:text="' @ ' + ${ev.venue}"> @ Main Hall</span>
+          </span>
+          <form th:action="@{'/schedule/events/' + ${ev.id} + '/delete'}" method="post"
+                onsubmit="return confirm('Delete this event?')">
+            <button class="btn danger small" type="submit">✕</button>
+          </form>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>
